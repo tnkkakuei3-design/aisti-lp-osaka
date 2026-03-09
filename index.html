@@ -466,6 +466,7 @@ class ChatForm{
   getTodayCount(){const d=new Date();return 28+((d.getFullYear()*10000+(d.getMonth()+1)*100+d.getDate())%25)}
 
   async showComplete(){
+    const esc=(s)=>s.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
     this.inputInner.innerHTML='';this.progressFill.style.width='100%';this.progressPct.textContent='100%';
     const tb=document.getElementById('trustBar');if(tb)tb.style.display='none';
     await this.addBotMessage('おつかれさまでした！<br>査定の結果が出ましたので、ご覧ください。');await this.delay(500);
@@ -516,7 +517,6 @@ class ChatForm{
     // チャットエリアにもCTA表示
     await this.addBotMessage('正確な査定額は<b>LINE</b>でお届けします。<br>下のボタンからお友だち追加してください！');
     await this.delay(400);
-    const esc=(s)=>s.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
     const areaName=esc((this.answers.prefecture||'')+(this.answers.city?' '+this.answers.city:''));
     await this.addBotMessage(`<small style="color:var(--text-mid)">${areaName||AREA}エリアでは今月 <b>${8+this.getTodayCount()%12}</b> 件の査定依頼が入っています。<br>お早めにご確認ください。</small>`);
     this.scrollToBottom();this.isComplete=true;
