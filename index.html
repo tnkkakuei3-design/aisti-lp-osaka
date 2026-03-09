@@ -516,9 +516,6 @@ class ChatForm{
 
     // チャットエリアにもCTA表示
     await this.addBotMessage('正確な査定額は<b>LINE</b>でお届けします。<br>下のボタンからお友だち追加してください！');
-    await this.delay(400);
-    const areaName=esc(AREA+(this.answers.town?' '+this.answers.town:''));
-    await this.addBotMessage(`<small style="color:var(--text-mid)">${areaName||AREA}エリアでは今月 <b>${8+this.getTodayCount()%12}</b> 件の査定依頼が入っています。<br>お早めにご確認ください。</small>`);
     this.scrollToBottom();this.isComplete=true;
   }
 
