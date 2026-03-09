@@ -22,7 +22,7 @@
 ## 最新安定タグ
 
 ```
-aisti-lp-v1.2.7
+aisti-lp-v1.2.8
 ```
 
 ## 公開URL
@@ -34,12 +34,13 @@ https://tnkkakuei3-design.github.io/aisti-lp-osaka/
 | リポジトリ | 種別 | 最新タグ | 公開URL |
 |-----------|------|---------|--------|
 | aisti-satei-chat-lp | 汎用版 | v1.2.6 | https://tnkkakuei3-design.github.io/aisti-satei-chat-lp/ |
-| aisti-lp-osaka | 大阪版 | aisti-lp-v1.2.7 | https://tnkkakuei3-design.github.io/aisti-lp-osaka/ |
-| aisti-lp-fukuoka | 福岡版 | aisti-lp-fukuoka-v1.0.8 | https://tnkkakuei3-design.github.io/aisti-lp-fukuoka/ |
-| aisti-lp-tokyo | 東京版 | aisti-lp-tokyo-v1.0.8 | https://tnkkakuei3-design.github.io/aisti-lp-tokyo/ |
+| aisti-lp-osaka | 大阪版 | aisti-lp-v1.2.8 | https://tnkkakuei3-design.github.io/aisti-lp-osaka/ |
+| aisti-lp-fukuoka | 福岡版 | aisti-lp-fukuoka-v1.0.9 | https://tnkkakuei3-design.github.io/aisti-lp-fukuoka/ |
+| aisti-lp-tokyo | 東京版 | aisti-lp-tokyo-v1.0.9 | https://tnkkakuei3-design.github.io/aisti-lp-tokyo/ |
 
 ## 更新履歴
 
 | 日付 | バージョン | 内容 |
 |------|-----------|------|
-| 2026-03-10 | aisti-lp-v1.2.7 | 最新安定版 |
+| 2026-03-10 | aisti-lp-v1.2.8 | 最新安定版 |
+| 2026-03-10 | aisti-lp-v1.2.7 | 旧安定版 |
