@@ -479,7 +479,7 @@ class ChatForm{
     ].filter(i=>i.v&&i.v.trim());
 
     const rc=document.createElement('div');rc.className='result-card';
-    rc.innerHTML=`<h3>査定診断レポート</h3><div class="result-summary">${items.map(i=>`<div class="row"><span class="label">${i.l}</span><span class="value">${i.v}</span></div>`).join('')}</div><div class="price-estimate"><div class="est-label">AI簡易査定による推定価格</div><div class="est-price"><span class="est-blurred">${fL}</span> 〜 <span class="est-blurred">${fH}</span> <span class="est-unit">万円</span></div><div class="est-note">※ 正確な査定額はLINEでお届けします</div></div>`;
+    rc.innerHTML=`<h3>査定診断レポート</h3><div class="result-summary">${items.map(i=>`<div class="row"><span class="label">${esc(i.l)}</span><span class="value">${esc(i.v)}</span></div>`).join('')}</div><div class="price-estimate"><div class="est-label">AI簡易査定による推定価格</div><div class="est-price"><span class="est-blurred">${fL}</span> 〜 <span class="est-blurred">${fH}</span> <span class="est-unit">万円</span></div><div class="est-note">※ 正確な査定額はLINEでお届けします</div></div>`;
     this.chatArea.appendChild(rc);this.scrollToBottom();await this.delay(600);
 
     // セッション保存（data属性のGAS Webhook URLへ送信）
