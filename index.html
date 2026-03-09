@@ -10,7 +10,8 @@
   <meta property="og:description" content="最短60秒で概算価格がわかります。大阪市中央区のマンション売却をお考えなら、まずは無料査定。">
   <meta property="og:type" content="website">
   <meta property="og:locale" content="ja_JP">
-  <meta property="og:image" content="assets/ogp.png">
+  <meta property="og:image" content="https://satei.aisti.jp/assets/ogp.png">
+  <meta property="og:url" content="https://satei.aisti.jp/">
   <meta name="description" content="最短60秒で概算価格がわかります。大阪市中央区のマンション売却をお考えなら、まずは無料査定。">
   <link rel="icon" href="assets/favicon.ico">
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -134,12 +135,13 @@
     .submit-btn:active{transform:scale(.98);opacity:.9}
     .submit-btn:disabled{opacity:.5;cursor:not-allowed}
 
-    .back-btn{display:flex;align-items:center;justify-content:center;background:none;border:none;color:var(--text-light);font-size:12px;font-weight:500;font-family:inherit;cursor:pointer;margin-top:10px;text-align:center;width:100%;min-height:40px;padding:4px;transition:color .2s}
-    .back-btn:hover{color:var(--text-mid)}
+    .back-btn{display:flex;align-items:center;justify-content:center;background:none;border:none;color:var(--text-mid);text-decoration:underline;text-underline-offset:3px;font-size:12px;font-weight:500;font-family:inherit;cursor:pointer;margin-top:10px;text-align:center;width:100%;min-height:40px;padding:4px;transition:color .2s}
+    .back-btn:hover{color:var(--text)}
 
     /* ===== LINE CTA（固定表示） ===== */
-    .line-cta-fixed{position:fixed;bottom:0;left:0;right:0;z-index:100;background:var(--card);padding:12px 16px;padding-bottom:max(12px,env(safe-area-inset-bottom));border-top:1px solid var(--border);box-shadow:0 -4px 16px rgba(27,40,56,.08);display:none}
-    .line-cta-fixed-inner{max-width:480px;margin:0 auto}
+    .line-cta-fixed{position:fixed;bottom:0;left:0;right:0;z-index:100;padding:12px 16px;padding-bottom:max(12px,env(safe-area-inset-bottom));background:#fff;border-top:1px solid var(--border);box-shadow:0 -4px 12px rgba(0,0,0,.08);display:none;flex-direction:column;align-items:center;gap:6px}
+    .line-cta-fixed .line-cta{max-width:480px;width:100%;margin:0}
+    .line-cta-fixed .cta-sub{max-width:480px;margin:0}
     .line-cta{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:17px;min-height:52px;background:var(--line-green);color:#fff;border:none;border-radius:var(--radius);font-size:16px;font-weight:700;font-family:inherit;cursor:pointer;text-decoration:none;transition:all .2s;-webkit-tap-highlight-color:transparent;animation:ctaPulse 2.5s cubic-bezier(.4,0,.6,1) infinite}
     .line-cta:active{opacity:.9;transform:scale(.98);animation:none}
     .line-cta svg{width:22px;height:22px;fill:#fff;flex-shrink:0}
@@ -350,6 +352,7 @@ class ChatForm{
   addUserMessage(text){const el=document.createElement('div');el.className='msg-user';const b=document.createElement('div');b.className='bubble';b.textContent=text;el.appendChild(b);this.chatArea.appendChild(el);this.scrollToBottom();return el}
 
   async start(){
+    this.updateProgress();
     await this.addBotMessage(`こんにちは！<br>アイスティ不動産の<b>無料査定</b>です。<br><b>${AREA}</b>のマンション、今いくらか気になりませんか？`);
     await this.delay(400);
     const chartMsg=document.createElement('div');chartMsg.className='msg-bot';
@@ -369,6 +372,7 @@ class ChatForm{
     if(index>0){const b=document.createElement('button');b.className='back-btn';b.textContent='← 前の質問に戻る';b.onclick=()=>this.goBack();this.inputInner.appendChild(b)}
     this.stepHistory[index]=this.chatArea.childElementCount-eb;
     this.trackEvent('ViewContent',{content_name:step.id,content_type:'step'});
+    if(typeof dataLayer!=='undefined'){dataLayer.push({event:'chat_step_view',step_number:index+1,step_id:step.id,step_total:this.totalSteps});}
   }
 
   renderChoices(step){
@@ -478,6 +482,9 @@ class ChatForm{
     if(typeof dataLayer!=='undefined')dataLayer.push({event:'form_complete',property_type:this.answers.property_type,area:AREA,est_low:price.low,est_high:price.high});
 
     // LINE CTA固定ボタンを表示
+    const inputArea=document.getElementById('inputArea');
+    inputArea.style.display='none';
+    this.chatArea.style.paddingBottom='140px';
     const isMobile=/iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
     const lineUrl=`${LINE_ADD_URL}?ref=${sid}`;
     const ctaFixed=document.getElementById('lineCtaFixed');
@@ -490,10 +497,14 @@ class ChatForm{
       if(isMobile){e.preventDefault();setTimeout(()=>{location.href=lineUrl},300)}
     });
     document.getElementById('todayCount').textContent=this.getTodayCount();
-    ctaFixed.style.display='block';
+    ctaFixed.style.display='flex';
 
     // チャットエリアにもCTA表示
     await this.addBotMessage('正確な査定額は<b>LINE</b>でお届けします。<br>下のボタンからお友だち追加してください！');
+    await this.delay(400);
+    const esc=(s)=>s.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    const areaName=esc((this.answers.prefecture||'')+(this.answers.city?' '+this.answers.city:''));
+    await this.addBotMessage(`<small style="color:var(--text-mid)">${areaName||AREA}エリアでは今月 <b>${8+this.getTodayCount()%12}</b> 件の査定依頼が入っています。<br>お早めにご確認ください。</small>`);
     this.scrollToBottom();this.isComplete=true;
   }
 
