@@ -336,7 +336,7 @@ class ChatForm{
   }
   delay(ms){return new Promise(r=>setTimeout(r,ms))}
   scrollToBottom(){requestAnimationFrame(()=>{this.chatArea.scrollTop=this.chatArea.scrollHeight});setTimeout(()=>{this.chatArea.scrollTop=this.chatArea.scrollHeight},350)}
-  updateProgress(){const pct=Math.round(((this.stepIndex+1)/(this.totalSteps+1))*100);this.progressFill.style.width=pct+'%';this.progressPct.textContent=pct+'%'}
+  updateProgress(){const pct=Math.min(100,Math.round((this.stepIndex+1)/this.totalSteps*100));this.progressFill.style.width=pct+'%';this.progressPct.textContent=pct+'%'}
   trackEvent(ev,data){if(typeof ttq!=='undefined')try{ttq.track(ev,data||{})}catch(e){}}
 
   async addBotMessage(html){
