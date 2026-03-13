@@ -1,7 +1,7 @@
-# wrangler.toml — 大阪市中央区マンション査定LP
+# wrangler.toml — 大阪市マンション査定LP
 # Cloudflare Pages + Workers 設定
 
-name = "aisti-lp-osaka-chuo-mansion"
+name = "aisti-lp-osaka"
 compatibility_date = "2024-01-01"
 
 # KVネームスペースバインディング
@@ -11,5 +11,7 @@ binding = "SESSIONS_KV"
 id = "YOUR_KV_NAMESPACE_ID"
 
 # 環境変数（Cloudflare Dashboard → Pages → Settings で設定）
+# ローカル開発時（wrangler pages dev）は以下のコメントを外して使用
 # [vars]
 # GAS_WEBHOOK_URL = "YOUR_GAS_WEBHOOK_URL"
+# SITE_SOURCE = "local-dev"

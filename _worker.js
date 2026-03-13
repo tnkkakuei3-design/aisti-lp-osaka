@@ -1,5 +1,5 @@
 // _worker.js — Cloudflare Workers
-// 大阪市中央区マンション査定LP用バックエンド
+// 大阪市マンション査定LP用バックエンド
 //
 // 機能:
 //   POST /api/session → 回答データをKV保存 + GAS Webhook通知 + セッションID返却
@@ -14,7 +14,7 @@ const CORS_HEADERS = {
 };
 
 export default {
-  async fetch(request, env) {
+  async fetch(request, env, ctx) {
     const url = new URL(request.url);
     const path = url.pathname;
 
@@ -25,7 +25,7 @@ export default {
 
     // === POST /api/session ===
     if (path === '/api/session' && request.method === 'POST') {
-      return handleSessionPost(request, env);
+      return handleSessionPost(request, env, ctx);
     }
 
     // === GET /api/session?id=xxx ===
@@ -44,9 +44,45 @@ export default {
 };
 
 // --- セッション保存 ---
-async function handleSessionPost(request, env) {
+async function handleSessionPost(request, env, ctx) {
   try {
-    const data = await request.json();
+    const rawBody = await request.text();
+
+    // リクエストボディのサイズ制限（10KB）
+    if (rawBody.length > 10240) {
+      return new Response(
+        JSON.stringify({ success: false, session_id: '', error: 'Request body too large' }),
+        { status: 413, headers: CORS_HEADERS }
+      );
+    }
+
+    let data;
+    try {
+      data = JSON.parse(rawBody);
+    } catch (parseErr) {
+      return new Response(
+        JSON.stringify({ success: false, session_id: '', error: 'Invalid JSON' }),
+        { status: 400, headers: CORS_HEADERS }
+      );
+    }
+
+    // データがオブジェクトであることを確認
+    if (typeof data !== 'object' || data === null || Array.isArray(data)) {
+      return new Response(
+        JSON.stringify({ success: false, session_id: '', error: 'Invalid data format' }),
+        { status: 400, headers: CORS_HEADERS }
+      );
+    }
+
+    // 各フィールドの文字長制限（500文字）
+    for (const [key, value] of Object.entries(data)) {
+      if (typeof value === 'string' && value.length > 500) {
+        return new Response(
+          JSON.stringify({ success: false, session_id: '', error: `Field '${key}' exceeds maximum length` }),
+          { status: 400, headers: CORS_HEADERS }
+        );
+      }
+    }
 
     // KVとGAS Webhookが両方未設定の場合、データが完全に失われるためエラーを返す
     if (!env.SESSIONS_KV && !env.GAS_WEBHOOK_URL) {
@@ -77,17 +113,17 @@ async function handleSessionPost(request, env) {
       });
     }
 
-    // 2. GAS Webhookに通知（非同期・非ブロッキング）
+    // 2. GAS Webhookに通知（バックグラウンド実行・レスポンスをブロックしない）
     if (env.GAS_WEBHOOK_URL) {
-      try {
-        await fetch(env.GAS_WEBHOOK_URL, {
+      ctx.waitUntil(
+        fetch(env.GAS_WEBHOOK_URL, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ session_id: sessionId, ...data }),
-        });
-      } catch (gasErr) {
-        console.error('GAS Webhook error (non-blocking):', gasErr);
-      }
+        }).catch(gasErr => {
+          console.error('GAS Webhook error (non-blocking):', gasErr);
+        })
+      );
     }
 
     return new Response(
