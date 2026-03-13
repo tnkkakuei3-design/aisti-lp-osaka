@@ -127,7 +127,7 @@ async function handleSessionPost(request, env, ctx) {
     }
 
     return new Response(
-      JSON.stringify({ success: true, session_id: sessionId }),
+      JSON.stringify({ success: true, session_id: sessionId, source: source }),
       { status: 200, headers: CORS_HEADERS }
     );
   } catch (err) {
