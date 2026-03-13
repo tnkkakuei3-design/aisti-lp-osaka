@@ -13,6 +13,9 @@
 
 - **GitHubアカウント**: ソースコードを管理するために使用します。
 - **Cloudflareアカウント**: サイトをデプロイし、ホスティングするために使用します。
+- **TikTok広告アカウント**: 自身の広告効果を計測するためのピクセルIDを発行するために必要です。
+- **Googleアカウント（GTM）**: Googleタグマネージャーのコンテナを作成するために必要です。
+- **LINE公式アカウント**: ユーザーをLINEに誘導するための友だち追加URLが必要です。
 
 ## 2. 構築手順
 
@@ -75,7 +78,61 @@ KVネームスペースの作成が完了したら、環境変数を設定しま
 
 設定後、`Settings` > `Deployments` に移動し、`Retry deployment` をクリックして変更を反映させてください。
 
+### ステップ7: トラッキングID・外部サービスIDの変更
+
+**このステップは、自身の広告効果を正確に計測するために必ず実施してください。**
+
+`index.html` 内に記載されているプレースホルダーを、ご自身のIDに書き換えます。変更は後述の「Manusへの依頼用プロンプト」を使って依頼することを推奨します。
+
+#### 変更必須（3項目）
+
+**① TikTok Pixel ID（1箇所）**
+
+- **ファイル:** `index.html`
+- **行番号:** 38行目
+- **変更前:** `ttq.load('TIKTOK_PIXEL_ID');`
+- **変更後:** `ttq.load('あなたのTikTokピクセルID');`
+- **取得方法:** TikTok広告マネージャー（[ads.tiktok.com](https://ads.tiktok.com)）にログイン → `アセット` > `イベント` > `ウェブイベント` からピクセルを作成または確認します。
+
+**② GTMコンテナID（2箇所）**
+
+- **ファイル:** `index.html`
+- **行番号:** 25行目・191行目（2箇所とも変更が必要です）
+- **変更前:** `'GTM-XXXXXXX'`（25行目）、`?id=GTM-XXXXXXX`（191行目）
+- **変更後:** `'GTM-あなたのコンテナID'`（25行目）、`?id=GTM-あなたのコンテナID`（191行目）
+- **取得方法:** Google Tag Manager（[tagmanager.google.com](https://tagmanager.google.com)）にログイン → コンテナを作成または選択すると、`GTM-XXXXXXX` 形式のIDが表示されます。
+
+**③ LINE公式アカウントURL（2箇所）**
+
+- **ファイル:** `index.html`
+- **行番号:** 211行目・225行目（2箇所とも変更が必要です）
+- **変更前:** `'https://lin.ee/XXXXXXX'`
+- **変更後:** `'https://lin.ee/あなたのLINEアカウントID'`
+- **取得方法:** LINE Official Account Manager（[manager.line.biz](https://manager.line.biz)）にログイン → 対象のアカウントを選択 → `友だちを増やす` > `友だち追加ガイド` から友だち追加URLを確認します。
+
+#### 変更推奨（1項目）
+
+**④ OGP画像・URL（2箇所）**
+
+- **ファイル:** `index.html`
+- **行番号:** 13行目・14行目
+- **変更前:**
+  ```html
+  <meta property="og:image" content="https://satei.aisti.jp/assets/ogp.png">
+  <meta property="og:url" content="https://satei.aisti.jp/">
+  ```
+- **変更後:**
+  ```html
+  <meta property="og:image" content="https://あなたのサイトURL/assets/ogp.png">
+  <meta property="og:url" content="https://あなたのサイトURL/">
+  ```
+- **説明:** LINEやSNSでページがシェアされた際に表示されるサムネイル画像とURLです。Cloudflare Pagesでデプロイ後に発行されるURLに書き換えることで、シェア時の表示が正しくなります。
+
+---
+
 ## 3. Manusへの依頼用プロンプト
+
+### 汎用プロンプト（修正・機能追加）
 
 今後、このリポジトリに対して修正や機能追加を行いたい場合は、以下のプロンプトテンプレートをManusに渡して依頼してください。
 
@@ -94,5 +151,51 @@ KVネームスペースの作成が完了したら、環境変数を設定しま
 - PR先: `main`ブランチ
 
 ```
+
+### ミラーサイト初期設定プロンプト（トラッキングID一括変更）
+
+ステップ7のトラッキングID変更をManusに依頼する場合は、以下のプロンプトを使用してください。`【 】`内を自分の値に書き換えてから送信してください。
+
+```
+## 対象リポジトリ
+
+`https://github.com/【あなたのGitHubユーザー名】/【あなたのリポジトリ名】.git`
+
+## 依頼内容
+
+index.html のトラッキングIDを以下の値に書き換えてください。
+
+### 変更必須（3項目）
+
+1. TikTok Pixel ID
+   - 対象: index.html 38行目
+   - 変更前: `ttq.load('TIKTOK_PIXEL_ID');`
+   - 変更後: `ttq.load('【あなたのTikTokピクセルID】');`
+
+2. GTMコンテナID（2箇所）
+   - 対象: index.html 25行目・191行目
+   - 変更前: `GTM-XXXXXXX`
+   - 変更後: `【あなたのGTMコンテナID（例: GTM-ABC1234）】`
+
+3. LINE公式アカウントURL（2箇所）
+   - 対象: index.html 211行目・225行目
+   - 変更前: `https://lin.ee/XXXXXXX`
+   - 変更後: `【あなたのLINE友だち追加URL（例: https://lin.ee/AbCdEfG）】`
+
+### 変更推奨（1項目）
+
+4. OGP画像・URL（2箇所）
+   - 対象: index.html 13行目・14行目
+   - og:image の content を `【あなたのサイトURL】/assets/ogp.png` に変更
+   - og:url の content を `【あなたのサイトURL】/` に変更
+
+## 作業ブランチとPR
+
+- 作業ブランチ: `fix/tracking-ids`
+- PR先: `main`ブランチ
+
+```
+
+---
 
 以上でミラーサイトの構築は完了です。不明点があれば、情シス部門までお問い合わせください。
