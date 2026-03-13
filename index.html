@@ -488,6 +488,7 @@ class ChatForm{
     let sid='';
     try{
       const formData={...this.answers,area:AREA,est_low:price.low,est_high:price.high,...this.trackingData,created_at:new Date().toISOString()};
+      // source パラメータは _worker.js 側で環境変数 SITE_SOURCE から付与される
       const res=await fetch('/api/session',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(formData)});
       const data=await res.json();sid=data.session_id||'';
     }catch(e){console.error('セッション保存失敗:',e);sid='s_'+Date.now()}

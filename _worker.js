@@ -49,6 +49,10 @@ async function handleSessionPost(request, env) {
     const data = await request.json();
     const sessionId = `s_${Date.now()}_${crypto.randomUUID().slice(0, 8)}`;
 
+    // 環境変数 SITE_SOURCE からミラーサイト識別子を取得して付与
+    const source = env.SITE_SOURCE || 'unknown';
+    data.source = source;
+
     // 1. KVに保存（30日間保持）
     if (env.SESSIONS_KV) {
       await env.SESSIONS_KV.put(sessionId, JSON.stringify(data), {
@@ -57,6 +61,7 @@ async function handleSessionPost(request, env) {
           property_type: data.property_type || '',
           area: data.area || '',
           town: data.town || '',
+          source: source,
           created: data.created_at || new Date().toISOString(),
         }
       });
