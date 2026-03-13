@@ -38,8 +38,8 @@ export default {
       return handleCities(url);
     }
 
-    // 静的ファイルはCloudflare Pagesが処理するためここには到達しない
-    return new Response('Not Found', { status: 404 });
+    // 静的ファイルはCloudflare Pagesのアセット配信に委譲
+    return env.ASSETS.fetch(request);
   }
 };
 
@@ -47,6 +47,16 @@ export default {
 async function handleSessionPost(request, env) {
   try {
     const data = await request.json();
+
+    // KVとGAS Webhookが両方未設定の場合、データが完全に失われるためエラーを返す
+    if (!env.SESSIONS_KV && !env.GAS_WEBHOOK_URL) {
+      console.error('CRITICAL: SESSIONS_KV と GAS_WEBHOOK_URL が両方未設定です。リードデータが保存されません。');
+      return new Response(
+        JSON.stringify({ success: false, session_id: '', error: 'Server configuration error' }),
+        { status: 500, headers: CORS_HEADERS }
+      );
+    }
+
     const sessionId = `s_${Date.now()}_${crypto.randomUUID().slice(0, 8)}`;
 
     // 環境変数 SITE_SOURCE からミラーサイト識別子を取得して付与

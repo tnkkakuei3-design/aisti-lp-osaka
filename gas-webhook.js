@@ -10,10 +10,10 @@
  *   3. デプロイ → ウェブアプリ → アクセスできるユーザー「全員」で公開
  *   4. 生成されたURLを Cloudflare Pages の環境変数 GAS_WEBHOOK_URL に設定
  * 
- * ヘッダー行（A1〜N1）:
+ * ヘッダー行（A1〜Q1）:
  *   timestamp | session_id | source | property_type | area | town |
  *   floor_area | building_age | timing | est_low | est_high |
- *   utm_source | utm_medium | utm_campaign
+ *   utm_source | utm_medium | utm_campaign | utm_term | ttclid | landing_url
  */
 
 /**
@@ -40,7 +40,10 @@ function doPost(e) {
         'est_high',
         'utm_source',
         'utm_medium',
-        'utm_campaign'
+        'utm_campaign',
+        'utm_term',
+        'ttclid',
+        'landing_url'
       ]);
     }
 
@@ -59,7 +62,10 @@ function doPost(e) {
       data.est_high || '',
       data.utm_source || '',
       data.utm_medium || '',
-      data.utm_campaign || ''
+      data.utm_campaign || '',
+      data.utm_term || '',
+      data.ttclid || '',
+      data.landing_url || ''
     ]);
 
     return ContentService
