@@ -9,8 +9,8 @@
 | 項目 | 内容 |
 |------|------|
 | フロントエンド | バニラJS（Vanilla JavaScript） |
-| ホスティング | GitHub Pages |
-| サーバーレス関数 | Cloudflare Workers |
+| ホスティング | Cloudflare Pages |
+| サーバーレス関数 | Cloudflare Workers（Pages Functions Advanced Mode） |
 | バージョン管理 | GitHub |
 
 ## リポジトリの役割
