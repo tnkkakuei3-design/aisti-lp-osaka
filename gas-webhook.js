@@ -97,9 +97,9 @@ function doPost(e) {
     // データ行を追加（ホワイトリスト済み + セルインジェクション対策済み）
     // floor_area（例: "〜20㎡"）と building_age（例: "新築〜5年"）は
     // 数値ではなく文字列として送信されるため、sanitizeCellValue_() を適用する
-    // est_low / est_high は数値のためセルインジェクション対策は不要
+    // est_low / est_high / created_at もAPIから任意文字列を送信可能なためサニタイズする
     sheet.appendRow([
-      sanitized.created_at || new Date().toISOString(),
+      sanitizeCellValue_(sanitized.created_at) || new Date().toISOString(),
       sanitizeCellValue_(sanitized.session_id),
       sanitizeCellValue_(sanitized.source),
       sanitizeCellValue_(sanitized.property_type),
@@ -108,8 +108,8 @@ function doPost(e) {
       sanitizeCellValue_(sanitized.floor_area),
       sanitizeCellValue_(sanitized.building_age),
       sanitizeCellValue_(sanitized.timing),
-      sanitized.est_low,
-      sanitized.est_high,
+      sanitizeCellValue_(sanitized.est_low),
+      sanitizeCellValue_(sanitized.est_high),
       sanitizeCellValue_(sanitized.utm_source),
       sanitizeCellValue_(sanitized.utm_medium),
       sanitizeCellValue_(sanitized.utm_campaign),
