@@ -43,7 +43,33 @@ function sanitizeCellValue_(value) {
 function doPost(e) {
   try {
     const data = JSON.parse(e.postData.contents);
-    const sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+
+    // 入力バリデーション
+    if (typeof data !== 'object' || data === null || Array.isArray(data)) {
+      return ContentService
+        .createTextOutput(JSON.stringify({ status: 'error', message: 'Invalid data format' }))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+
+    // 許可するフィールド名のみ受け入れ（ホワイトリスト方式）
+    // 新しいフィールドを追加する場合は、ここにも追記してください
+    var allowedFields = [
+      'created_at', 'session_id', 'source', 'property_type', 'area', 'town',
+      'floor_area', 'building_age', 'timing', 'est_low', 'est_high',
+      'utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'ttclid', 'landing_url'
+    ];
+    var sanitized = {};
+    for (var i = 0; i < allowedFields.length; i++) {
+      var key = allowedFields[i];
+      var val = data[key];
+      if (val !== undefined && val !== null) {
+        sanitized[key] = String(val).substring(0, 500);
+      } else {
+        sanitized[key] = '';
+      }
+    }
+
+    var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
 
     // ヘッダーが未設定の場合は自動作成
     if (sheet.getLastRow() === 0) {
@@ -68,31 +94,32 @@ function doPost(e) {
       ]);
     }
 
-    // データ行を追加（ユーザー制御可能な文字列値はすべてサニタイズする）
+    // データ行を追加（ホワイトリスト済み + セルインジェクション対策済み）
     // floor_area（例: "〜20㎡"）と building_age（例: "新築〜5年"）は
     // 数値ではなく文字列として送信されるため、sanitizeCellValue_() を適用する
+    // est_low / est_high は数値のためセルインジェクション対策は不要
     sheet.appendRow([
-      data.created_at || new Date().toISOString(),
-      sanitizeCellValue_(data.session_id || ''),
-      sanitizeCellValue_(data.source || ''),
-      sanitizeCellValue_(data.property_type || ''),
-      sanitizeCellValue_(data.area || ''),
-      sanitizeCellValue_(data.town || ''),
-      sanitizeCellValue_(data.floor_area || ''),
-      sanitizeCellValue_(data.building_age || ''),
-      sanitizeCellValue_(data.timing || ''),
-      data.est_low || '',
-      data.est_high || '',
-      sanitizeCellValue_(data.utm_source || ''),
-      sanitizeCellValue_(data.utm_medium || ''),
-      sanitizeCellValue_(data.utm_campaign || ''),
-      sanitizeCellValue_(data.utm_term || ''),
-      sanitizeCellValue_(data.ttclid || ''),
-      sanitizeCellValue_(data.landing_url || '')
+      sanitized.created_at || new Date().toISOString(),
+      sanitizeCellValue_(sanitized.session_id),
+      sanitizeCellValue_(sanitized.source),
+      sanitizeCellValue_(sanitized.property_type),
+      sanitizeCellValue_(sanitized.area),
+      sanitizeCellValue_(sanitized.town),
+      sanitizeCellValue_(sanitized.floor_area),
+      sanitizeCellValue_(sanitized.building_age),
+      sanitizeCellValue_(sanitized.timing),
+      sanitized.est_low,
+      sanitized.est_high,
+      sanitizeCellValue_(sanitized.utm_source),
+      sanitizeCellValue_(sanitized.utm_medium),
+      sanitizeCellValue_(sanitized.utm_campaign),
+      sanitizeCellValue_(sanitized.utm_term),
+      sanitizeCellValue_(sanitized.ttclid),
+      sanitizeCellValue_(sanitized.landing_url)
     ]);
 
-    // リード通知メール送信
-    sendLeadNotification_(data);
+    // リード通知メール送信（サニタイズ済みデータを使用）
+    sendLeadNotification_(sanitized);
 
     return ContentService
       .createTextOutput(JSON.stringify({ status: 'ok' }))

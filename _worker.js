@@ -3,39 +3,69 @@
 //
 // 機能:
 //   POST /api/session → 回答データをKV保存 + GAS Webhook通知 + セッションID返却
-//   GET  /api/session?id=xxx → セッションデータ取得（LINE Webhook用）
-//   GET  /api/cities?prefecture=xxx → 市区町村取得プロキシ（HeartRails GeoAPI中継）
+//   GET  /api/session?id=xxx → セッションデータ取得（LINE Webhook用・同一オリジンのみ）
 
-const CORS_HEADERS = {
-  'Content-Type': 'application/json',
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type',
-};
+// 許可するオリジン（本番ドメインを追加してください）
+const ALLOWED_ORIGINS = [
+  'https://satei.aisti.jp',
+  'http://localhost:8788',
+  'http://127.0.0.1:8788',
+];
+
+function getCorsHeaders(request) {
+  const origin = request.headers.get('Origin') || '';
+  const isAllowed = ALLOWED_ORIGINS.some(o => origin === o) ||
+    origin.endsWith('.aisti-lp-osaka.pages.dev');
+  return {
+    'Content-Type': 'application/json',
+    'Access-Control-Allow-Origin': isAllowed ? origin : ALLOWED_ORIGINS[0],
+    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type',
+    'Vary': 'Origin',
+  };
+}
+
+// 簡易レート制限（IPベース、KV使用）
+async function checkRateLimit(request, env) {
+  if (!env.SESSIONS_KV) return true;
+  const ip = request.headers.get('CF-Connecting-IP') || 'unknown';
+  const key = `rl:${ip}`;
+  const now = Date.now();
+  const windowMs = 60 * 1000; // 1分間
+  const maxRequests = 10;     // 1分間に10回まで
+
+  const raw = await env.SESSIONS_KV.get(key);
+  let record = raw ? JSON.parse(raw) : { count: 0, start: now };
+
+  if (now - record.start > windowMs) {
+    record = { count: 0, start: now };
+  }
+
+  record.count++;
+  await env.SESSIONS_KV.put(key, JSON.stringify(record), { expirationTtl: 120 });
+
+  return record.count <= maxRequests;
+}
 
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
     const path = url.pathname;
+    const corsHeaders = getCorsHeaders(request);
 
     // CORS preflight
     if (request.method === 'OPTIONS') {
-      return new Response(null, { headers: CORS_HEADERS });
+      return new Response(null, { headers: corsHeaders });
     }
 
     // === POST /api/session ===
     if (path === '/api/session' && request.method === 'POST') {
-      return handleSessionPost(request, env, ctx);
+      return handleSessionPost(request, env, ctx, corsHeaders);
     }
 
     // === GET /api/session?id=xxx ===
     if (path === '/api/session' && request.method === 'GET') {
-      return handleSessionGet(url, env);
-    }
-
-    // === GET /api/cities?prefecture=xxx ===
-    if (path === '/api/cities' && request.method === 'GET') {
-      return handleCities(url);
+      return handleSessionGet(url, env, corsHeaders);
     }
 
     // 静的ファイルはCloudflare Pagesのアセット配信に委譲
@@ -44,15 +74,25 @@ export default {
 };
 
 // --- セッション保存 ---
-async function handleSessionPost(request, env, ctx) {
+async function handleSessionPost(request, env, ctx, corsHeaders) {
   try {
+    // レート制限チェック
+    const allowed = await checkRateLimit(request, env);
+    if (!allowed) {
+      return new Response(
+        JSON.stringify({ success: false, session_id: '', error: 'Too many requests' }),
+        { status: 429, headers: corsHeaders }
+      );
+    }
+
     const rawBody = await request.text();
 
-    // リクエストボディのサイズ制限（10KB）
-    if (rawBody.length > 10240) {
+    // リクエストボディのサイズ制限（10KB — バイト数で計算）
+    const byteLength = new TextEncoder().encode(rawBody).length;
+    if (byteLength > 10240) {
       return new Response(
         JSON.stringify({ success: false, session_id: '', error: 'Request body too large' }),
-        { status: 413, headers: CORS_HEADERS }
+        { status: 413, headers: corsHeaders }
       );
     }
 
@@ -62,7 +102,7 @@ async function handleSessionPost(request, env, ctx) {
     } catch (parseErr) {
       return new Response(
         JSON.stringify({ success: false, session_id: '', error: 'Invalid JSON' }),
-        { status: 400, headers: CORS_HEADERS }
+        { status: 400, headers: corsHeaders }
       );
     }
 
@@ -70,7 +110,15 @@ async function handleSessionPost(request, env, ctx) {
     if (typeof data !== 'object' || data === null || Array.isArray(data)) {
       return new Response(
         JSON.stringify({ success: false, session_id: '', error: 'Invalid data format' }),
-        { status: 400, headers: CORS_HEADERS }
+        { status: 400, headers: corsHeaders }
+      );
+    }
+
+    // フィールド数制限（最大20フィールド）
+    if (Object.keys(data).length > 20) {
+      return new Response(
+        JSON.stringify({ success: false, session_id: '', error: 'Too many fields' }),
+        { status: 400, headers: corsHeaders }
       );
     }
 
@@ -79,7 +127,7 @@ async function handleSessionPost(request, env, ctx) {
       if (typeof value === 'string' && value.length > 500) {
         return new Response(
           JSON.stringify({ success: false, session_id: '', error: `Field '${key}' exceeds maximum length` }),
-          { status: 400, headers: CORS_HEADERS }
+          { status: 400, headers: corsHeaders }
         );
       }
     }
@@ -89,11 +137,11 @@ async function handleSessionPost(request, env, ctx) {
       console.error('CRITICAL: SESSIONS_KV と GAS_WEBHOOK_URL が両方未設定です。リードデータが保存されません。');
       return new Response(
         JSON.stringify({ success: false, session_id: '', error: 'Server configuration error' }),
-        { status: 500, headers: CORS_HEADERS }
+        { status: 500, headers: corsHeaders }
       );
     }
 
-    const sessionId = `s_${Date.now()}_${crypto.randomUUID().slice(0, 8)}`;
+    const sessionId = `s_${Date.now()}_${crypto.randomUUID()}`;
 
     // 環境変数 SITE_SOURCE からミラーサイト識別子を取得して付与
     const source = env.SITE_SOURCE || 'unknown';
@@ -145,75 +193,48 @@ async function handleSessionPost(request, env, ctx) {
 
     return new Response(
       JSON.stringify({ success: true, session_id: sessionId, source: source }),
-      { status: 200, headers: CORS_HEADERS }
+      { status: 200, headers: corsHeaders }
     );
   } catch (err) {
     console.error('Session save error:', err);
     return new Response(
       JSON.stringify({ success: false, session_id: '' }),
-      { status: 500, headers: CORS_HEADERS }
+      { status: 500, headers: corsHeaders }
     );
   }
 }
 
-// --- セッション取得 ---
-async function handleSessionGet(url, env) {
+// --- セッション取得（同一オリジンからのみ許可） ---
+async function handleSessionGet(url, env, corsHeaders) {
   const sessionId = url.searchParams.get('id');
   if (!sessionId || !env.SESSIONS_KV) {
     return new Response(
       JSON.stringify({ error: 'session not found' }),
-      { status: 404, headers: CORS_HEADERS }
+      { status: 404, headers: corsHeaders }
     );
   }
+
+  // セッションIDのフォーマット検証
+  if (!/^s_\d+_[0-9a-f-]+$/.test(sessionId)) {
+    return new Response(
+      JSON.stringify({ error: 'invalid session id format' }),
+      { status: 400, headers: corsHeaders }
+    );
+  }
+
   try {
     const data = await env.SESSIONS_KV.get(sessionId);
     if (!data) {
       return new Response(
         JSON.stringify({ error: 'session expired or not found' }),
-        { status: 404, headers: CORS_HEADERS }
+        { status: 404, headers: corsHeaders }
       );
     }
-    return new Response(data, { status: 200, headers: CORS_HEADERS });
+    return new Response(data, { status: 200, headers: corsHeaders });
   } catch (err) {
     return new Response(
       JSON.stringify({ error: 'internal error' }),
-      { status: 500, headers: CORS_HEADERS }
-    );
-  }
-}
-
-// --- 市区町村取得プロキシ ---
-async function handleCities(url) {
-  const prefecture = url.searchParams.get('prefecture');
-  if (!prefecture) {
-    return new Response(
-      JSON.stringify({ error: 'prefecture parameter required' }),
-      { status: 400, headers: CORS_HEADERS }
-    );
-  }
-  try {
-    const apiUrl = `https://geoapi.heartrails.com/api/json?method=getCities&prefecture=${encodeURIComponent(prefecture)}`;
-    const res = await fetch(apiUrl, {
-      cf: { cacheTtl: 86400, cacheEverything: true }
-    });
-    const data = await res.json();
-    if (!data.response || !data.response.location) {
-      return new Response(
-        JSON.stringify({ cities: [] }),
-        { status: 200, headers: CORS_HEADERS }
-      );
-    }
-    const cities = data.response.location.map(loc => loc.city);
-    const unique = [...new Set(cities)];
-    return new Response(
-      JSON.stringify({ cities: unique }),
-      { status: 200, headers: CORS_HEADERS }
-    );
-  } catch (err) {
-    console.error('HeartRails API error:', err);
-    return new Response(
-      JSON.stringify({ cities: [], error: 'API unavailable' }),
-      { status: 200, headers: CORS_HEADERS }
+      { status: 500, headers: corsHeaders }
     );
   }
 }
