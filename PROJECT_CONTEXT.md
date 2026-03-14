@@ -45,4 +45,4 @@ https://aisti-lp-osaka.pages.dev/
 | 2026-03-14 | aisti-lp-v1.3.0 | Phase 4監査修正（floor_area/building_ageセルインジェクション対策・バージョン整備・CSP GA4リージョナルドメイン対応） |
 | 2026-03-14 | aisti-lp-v1.2.9 | Phase 3バグ修正（font-weight統一・GASレスポンス検証・showComplete二重実行ガード・URL更新・KVコメント） |
 | 2026-03-14 | aisti-lp-v1.2.8 | Phase 2バグ修正（APIエラーサイレント失敗・一棟物件専有面積スキップ・CSP補強） |
-| 2026-03-14 | aisti-lp-v1.2.7 | Phase 1バグ修正（セルインジェクション対策セrenderNumberInput await欠落） |
+| 2026-03-14 | aisti-lp-v1.2.7 | Phase 1バグ修正（セルインジェクション対策・renderNumberInput await欠落） |
