@@ -69,6 +69,8 @@ function doPost(e) {
     }
 
     // データ行を追加（ユーザー制御可能な文字列値はすべてサニタイズする）
+    // floor_area（例: "〜20㎡"）と building_age（例: "新築〜5年"）は
+    // 数値ではなく文字列として送信されるため、sanitizeCellValue_() を適用する
     sheet.appendRow([
       data.created_at || new Date().toISOString(),
       sanitizeCellValue_(data.session_id || ''),
@@ -76,8 +78,8 @@ function doPost(e) {
       sanitizeCellValue_(data.property_type || ''),
       sanitizeCellValue_(data.area || ''),
       sanitizeCellValue_(data.town || ''),
-      data.floor_area || '',
-      data.building_age || '',
+      sanitizeCellValue_(data.floor_area || ''),
+      sanitizeCellValue_(data.building_age || ''),
       sanitizeCellValue_(data.timing || ''),
       data.est_low || '',
       data.est_high || '',
