@@ -120,8 +120,14 @@ async function handleSessionPost(request, env, ctx) {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ session_id: sessionId, ...data }),
+        }).then(res => {
+          if (!res.ok) {
+            // HTTPエラー（4xx/5xx）をログに記録する
+            // バックグラウンド処理のためクライアントへのエラー返却は行わない
+            console.error(`GAS Webhook HTTP error (non-blocking): status=${res.status} ${res.statusText}`);
+          }
         }).catch(gasErr => {
-          console.error('GAS Webhook error (non-blocking):', gasErr);
+          console.error('GAS Webhook network error (non-blocking):', gasErr);
         })
       );
     }

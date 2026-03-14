@@ -388,13 +388,37 @@ class ChatForm{
     this.inputInner.appendChild(w);
   }
 
+  // 一棟系物件タイプの判定（専有面積スキップ対象）
+  isBulkProperty(propertyType){return ['ビル一棟','マンション一棟','アパート一棟'].includes(propertyType)}
+
+  // 次に表示すべきステップのインデックスを返す（スキップ考慮）
+  getNextStepIndex(currentIndex){
+    let next=currentIndex+1;
+    // floor_area（index=2）は一棟系物件の場合にスキップ
+    if(next<STEPS.length&&STEPS[next].id==='floor_area'&&this.isBulkProperty(this.answers.property_type)){
+      next++;
+    }
+    return next;
+  }
+
+  // 前に表示すべきステップのインデックスを返す（スキップ考慮）
+  getPrevStepIndex(currentIndex){
+    let prev=currentIndex-1;
+    // floor_area（index=2）は一棟系物件の場合にスキップして戻る
+    if(prev>=0&&STEPS[prev].id==='floor_area'&&this.isBulkProperty(this.answers.property_type)){
+      prev--;
+    }
+    return prev;
+  }
+
   async selectChoice(step,opt){
     if(this.isProcessing)return;this.isProcessing=true;
     const btns=this.inputInner.querySelectorAll('.choices button');btns.forEach(b=>b.disabled=true);
     const sel=Array.from(btns).find(b=>{const lbl=b.querySelector('.btn-label');return (lbl?lbl.textContent:b.textContent)===opt.label;});if(sel)sel.classList.add('confirmed');
     await this.delay(350);this.answers[step.id]=opt.value;this.addUserMessage(opt.label);
     this.inputInner.innerHTML='';await this.delay(200);this.isProcessing=false;
-    if(this.stepIndex+1>=this.totalSteps)await this.showComplete();else await this.showStep(this.stepIndex+1);
+    const next=this.getNextStepIndex(this.stepIndex);
+    if(next>=this.totalSteps)await this.showComplete();else await this.showStep(next);
   }
 
   renderSearchableList(step){
@@ -422,7 +446,8 @@ class ChatForm{
     if(this.isProcessing)return;this.isProcessing=true;
     this.answers[step.id]=value;this.addUserMessage(value);this.inputInner.innerHTML='';
     await this.delay(250);this.isProcessing=false;
-    if(this.stepIndex+1>=this.totalSteps)await this.showComplete();else await this.showStep(this.stepIndex+1);
+    const next=this.getNextStepIndex(this.stepIndex);
+    if(next>=this.totalSteps)await this.showComplete();else await this.showStep(next);
   }
 
   renderNumberInput(step){
@@ -523,11 +548,12 @@ class ChatForm{
   async goBack(){
     if(this.stepIndex<=0||this.isProcessing)return;
     this.isProcessing=true;
+    const prev=this.getPrevStepIndex(this.stepIndex);
     const cc=this.stepHistory[this.stepIndex]||0;for(let i=0;i<cc;i++){const l=this.chatArea.lastElementChild;if(l)l.remove()}
     const le=this.chatArea.lastElementChild;if(le&&le.classList.contains('msg-user'))le.remove();
-    const cp=this.stepHistory[this.stepIndex-1]||0;for(let i=0;i<cp;i++){const l=this.chatArea.lastElementChild;if(l)l.remove()}
-    const cs=STEPS[this.stepIndex],ps=STEPS[this.stepIndex-1];if(cs)delete this.answers[cs.id];if(ps)delete this.answers[ps.id];
-    this.inputInner.innerHTML='';await this.showStep(this.stepIndex-1);
+    const cp=this.stepHistory[prev]||0;for(let i=0;i<cp;i++){const l=this.chatArea.lastElementChild;if(l)l.remove()}
+    const cs=STEPS[this.stepIndex],ps=STEPS[prev];if(cs)delete this.answers[cs.id];if(ps)delete this.answers[ps.id];
+    this.inputInner.innerHTML='';await this.showStep(prev);
     this.isProcessing=false;
   }
 }
