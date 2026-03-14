@@ -367,7 +367,7 @@ class ChatForm{
     if(step.type==='choice')this.renderChoices(step);
     else if(step.type==='searchable_list')this.renderSearchableList(step);
     else if(step.type==='number_input')this.renderNumberInput(step);
-    if(index>0){const b=document.createElement('button');b.className='back-btn';b.textContent='← 前の質問に戻る';b.onclick=()=>this.goBack();this.inputInner.appendChild(b)}
+    if(index>0){const b=document.createElement('button');b.className='back-btn';b.textContent='← 前の質問に戻る';b.onclick=async()=>{await this.goBack()};this.inputInner.appendChild(b)}
     this.stepHistory[index]=this.chatArea.childElementCount-eb;
     this.trackEvent('ViewContent',{content_name:step.id,content_type:'step'});
     if(typeof dataLayer!=='undefined'){dataLayer.push({event:'chat_step_view',step_number:index+1,step_id:step.id,step_total:this.totalSteps});}
@@ -458,7 +458,7 @@ class ChatForm{
     if(step.unit){const u=document.createElement('div');u.className='number-unit';u.textContent=step.unit;w.appendChild(u)}
     const btn=document.createElement('button');btn.className='submit-btn';btn.textContent='次へ進む';
     btn.onclick=async()=>{if(this.isProcessing)return;const v=input.value.trim();if(!v||isNaN(v)){input.style.borderColor='#E74C3C';return}this.isProcessing=true;this.answers[step.id]=v;this.addUserMessage(v+(step.unitLabel||''));this.inputInner.innerHTML='';
-      if(this.stepIndex+1>=this.totalSteps)await this.showComplete();else await this.showStep(this.stepIndex+1);this.isProcessing=false;};
+      const next=this.getNextStepIndex(this.stepIndex);if(next>=this.totalSteps)await this.showComplete();else await this.showStep(next);this.isProcessing=false;};
     w.appendChild(btn);this.inputInner.appendChild(w);
   }
 
@@ -536,7 +536,7 @@ class ChatForm{
     ctaBtn.addEventListener('click',e=>{
       this.trackEvent('CompleteRegistration',{content_name:this.answers.property_type,value:1,currency:'JPY'});
       if(typeof dataLayer!=='undefined')dataLayer.push({event:'line_friend_add',property_type:this.answers.property_type,area:AREA,est_low:price.low,est_high:price.high});
-      if(isMobile){e.preventDefault();setTimeout(()=>{location.href=lineUrl},300)}
+      if(isMobile){e.preventDefault();if(navigator.sendBeacon){navigator.sendBeacon('/api/session?ping=1');setTimeout(()=>{location.href=lineUrl},50)}else{setTimeout(()=>{location.href=lineUrl},300)}}
     });
     document.getElementById('todayCount').textContent=this.getTodayCount();
     ctaFixed.style.display='flex';
