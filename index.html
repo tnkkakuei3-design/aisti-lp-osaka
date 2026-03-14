@@ -432,8 +432,8 @@ class ChatForm{
     w.appendChild(input);
     if(step.unit){const u=document.createElement('div');u.className='number-unit';u.textContent=step.unit;w.appendChild(u)}
     const btn=document.createElement('button');btn.className='submit-btn';btn.textContent='次へ進む';
-    btn.onclick=()=>{const v=input.value.trim();if(!v||isNaN(v)){input.style.borderColor='#E74C3C';return}this.answers[step.id]=v;this.addUserMessage(v+(step.unitLabel||''));this.inputInner.innerHTML='';
-      if(this.stepIndex+1>=this.totalSteps)this.showComplete();else this.showStep(this.stepIndex+1);};
+    btn.onclick=async()=>{if(this.isProcessing)return;const v=input.value.trim();if(!v||isNaN(v)){input.style.borderColor='#E74C3C';return}this.isProcessing=true;this.answers[step.id]=v;this.addUserMessage(v+(step.unitLabel||''));this.inputInner.innerHTML='';
+      if(this.stepIndex+1>=this.totalSteps)await this.showComplete();else await this.showStep(this.stepIndex+1);this.isProcessing=false;};
     w.appendChild(btn);this.inputInner.appendChild(w);
   }
 
