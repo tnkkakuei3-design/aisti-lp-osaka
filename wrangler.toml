@@ -2,7 +2,7 @@
 # Cloudflare Pages + Workers 設定
 
 name = "aisti-lp-osaka"
-compatibility_date = "2024-01-01"
+compatibility_date = "2025-01-01"
 
 # KVネームスペースバインディング
 # Cloudflare Dashboard → Workers & Pages → KV で作成後、IDを設定
