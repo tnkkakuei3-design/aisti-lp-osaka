@@ -6,9 +6,14 @@ compatibility_date = "2024-01-01"
 
 # KVネームスペースバインディング
 # Cloudflare Dashboard → Workers & Pages → KV で作成後、IDを設定
+#
+# 【重要】デプロイ前に以下の id を実際のKV Namespace IDに置き換えること
+# 取得方法: Cloudflare Dashboard → Workers & Pages → KV → 対象Namespaceの「ID」列をコピー
+# または: `wrangler kv:namespace list` コマンドで確認
+# 例: id = "a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4"
 [[kv_namespaces]]
 binding = "SESSIONS_KV"
-id = "YOUR_KV_NAMESPACE_ID"
+id = "YOUR_KV_NAMESPACE_ID" # TODO: デプロイ時に実際のKV Namespace IDに置き換えること
 
 # 環境変数（Cloudflare Dashboard → Pages → Settings で設定）
 # ローカル開発時（wrangler pages dev）は以下のコメントを外して使用

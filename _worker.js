@@ -125,7 +125,18 @@ async function handleSessionPost(request, env, ctx) {
             // HTTPエラー（4xx/5xx）をログに記録する
             // バックグラウンド処理のためクライアントへのエラー返却は行わない
             console.error(`GAS Webhook HTTP error (non-blocking): status=${res.status} ${res.statusText}`);
+            return;
           }
+          // GASのdoPostはJSONレスポンスを返すので、ボディを検証してログに記録する
+          return res.json().then(body => {
+            if (body.status === 'ok') {
+              console.log('GAS Webhook success:', JSON.stringify(body));
+            } else {
+              console.error('GAS Webhook returned non-ok status:', JSON.stringify(body));
+            }
+          }).catch(parseErr => {
+            console.error('GAS Webhook response parse error (non-blocking):', parseErr);
+          });
         }).catch(gasErr => {
           console.error('GAS Webhook network error (non-blocking):', gasErr);
         })

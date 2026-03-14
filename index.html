@@ -325,7 +325,7 @@ const STEPS=[
 /* ===== ChatFormクラス ===== */
 class ChatForm{
   constructor(){
-    this.stepIndex=0;this.answers={};this.stepHistory=[];this.isProcessing=false;this.isComplete=false;
+    this.stepIndex=0;this.answers={};this.stepHistory=[];this.isProcessing=false;this.isComplete=false;this.isCompleted=false;
     this.chatArea=document.getElementById('chatArea');this.inputInner=document.getElementById('inputInner');
     this.progressFill=document.getElementById('progressFill');this.progressPct=document.getElementById('progressPct');
     this.totalSteps=STEPS.length;
@@ -491,6 +491,7 @@ class ChatForm{
   getTodayCount(){const d=new Date();return 28+((d.getFullYear()*10000+(d.getMonth()+1)*100+d.getDate())%25)}
 
   async showComplete(){
+    if(this.isCompleted)return;this.isCompleted=true;
     const esc=(s)=>s.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
     this.inputInner.innerHTML='';this.progressFill.style.width='100%';this.progressPct.textContent='100%';
     const tb=document.getElementById('trustBar');if(tb)tb.style.display='none';
