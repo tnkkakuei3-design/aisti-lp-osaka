@@ -19,6 +19,25 @@
  */
 
 /**
+ * セルインジェクション（数式インジェクション）対策のサニタイズ関数
+ * 
+ * スプレッドシートのセルに書き込む文字列データの先頭が
+ * `=`, `+`, `-`, `@` のいずれかで始まる場合、Googleスプレッドシートが
+ * 数式として解釈してしまう危険性がある。
+ * 先頭にシングルクォート（'）を付与することで、文字列として強制的に解釈させる。
+ * 
+ * @param {string} value サニタイズ対象の文字列
+ * @returns {string} サニタイズ済みの文字列
+ */
+function sanitizeCellValue_(value) {
+  if (typeof value !== 'string') return value;
+  if (/^[=+\-@]/.test(value)) {
+    return "'" + value;
+  }
+  return value;
+}
+
+/**
  * POSTリクエストを受け取るエンドポイント
  */
 function doPost(e) {
@@ -49,25 +68,25 @@ function doPost(e) {
       ]);
     }
 
-    // データ行を追加
+    // データ行を追加（ユーザー制御可能な文字列値はすべてサニタイズする）
     sheet.appendRow([
       data.created_at || new Date().toISOString(),
-      data.session_id || '',
-      data.source || '',
-      data.property_type || '',
-      data.area || '',
-      data.town || '',
+      sanitizeCellValue_(data.session_id || ''),
+      sanitizeCellValue_(data.source || ''),
+      sanitizeCellValue_(data.property_type || ''),
+      sanitizeCellValue_(data.area || ''),
+      sanitizeCellValue_(data.town || ''),
       data.floor_area || '',
       data.building_age || '',
-      data.timing || '',
+      sanitizeCellValue_(data.timing || ''),
       data.est_low || '',
       data.est_high || '',
-      data.utm_source || '',
-      data.utm_medium || '',
-      data.utm_campaign || '',
-      data.utm_term || '',
-      data.ttclid || '',
-      data.landing_url || ''
+      sanitizeCellValue_(data.utm_source || ''),
+      sanitizeCellValue_(data.utm_medium || ''),
+      sanitizeCellValue_(data.utm_campaign || ''),
+      sanitizeCellValue_(data.utm_term || ''),
+      sanitizeCellValue_(data.ttclid || ''),
+      sanitizeCellValue_(data.landing_url || '')
     ]);
 
     // リード通知メール送信
