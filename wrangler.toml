@@ -13,7 +13,7 @@ compatibility_date = "2025-01-01"
 # 例: id = "a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4"
 [[kv_namespaces]]
 binding = "SESSIONS_KV"
-id = "YOUR_KV_NAMESPACE_ID" # TODO: デプロイ時に実際のKV Namespace IDに置き換えること
+id = "__KV_NAMESPACE_ID__" # TODO: デプロイ時に実際のKV Namespace IDに置き換えること（prompt-admin.mdで自動置換）
 
 # 環境変数（Cloudflare Dashboard → Pages → Settings で設定）
 # ローカル開発時（wrangler pages dev）は以下のコメントを外して使用
