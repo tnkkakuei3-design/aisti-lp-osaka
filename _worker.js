@@ -15,7 +15,7 @@ const ALLOWED_ORIGINS = [
 function getCorsHeaders(request) {
   const origin = request.headers.get('Origin') || '';
   const isAllowed = ALLOWED_ORIGINS.some(o => origin === o) ||
-    origin.endsWith('.aisti-lp-osaka.pages.dev');
+    /^https:\/\/aisti-lp-[a-z0-9-]+\.pages\.dev$/.test(origin);
   return {
     'Content-Type': 'application/json',
     'Access-Control-Allow-Origin': isAllowed ? origin : ALLOWED_ORIGINS[0],

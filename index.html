@@ -509,7 +509,7 @@ class ChatForm{
     inputArea.style.display='none';
     this.chatArea.style.paddingBottom='140px';
     const isMobile=/iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-    const sourceParam=this._source?`&source=${encodeURIComponent(this._source)}`:'';const lineUrl=`${LINE_ADD_URL}?ref=${sid}${sourceParam}`;
+    const sourceParam=this._source?`&source=${encodeURIComponent(this._source)}`:'';const separator=LINE_ADD_URL.includes('?')?'&':'?';const lineUrl=`${LINE_ADD_URL}${separator}ref=${sid}${sourceParam}`;
     const ctaFixed=document.getElementById('lineCtaFixed');
     const ctaBtn=document.getElementById('lineCtaBtn');
     ctaBtn.href=lineUrl;
