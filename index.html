@@ -14,12 +14,21 @@
   <meta property="og:url" content="https://satei.aisti.jp/">
   <meta name="description" content="最短60秒で概算価格がわかります。大阪市のマンション売却をお考えなら、まずは無料査定。">
   <link rel="icon" href="assets/favicon.ico">
+  <!-- Google Fonts: DNS prefetch + preconnect -->
+  <link rel="dns-prefetch" href="https://fonts.googleapis.com">
+  <link rel="dns-prefetch" href="https://fonts.gstatic.com">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <!-- Noto Sans JP 400 preload: force-load regular weight to prevent thin fallback font -->
+  <!-- Noto Sans JP: font-display=optional でFOUT（フォント切り替えのカクつき）を防止 -->
+  <!-- optional: フォントが間に合えばNoto Sans JP、間に合わなければシステムフォントのまま（切り替えなし） -->
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;600;700&display=optional" rel="stylesheet">
+  <!-- ひらがな・カタカナ・基本ASCII含むサブセット（.119）を最優先でpreload -->
   <link rel="preload" as="font" type="font/woff2"
-    href="https://fonts.gstatic.com/s/notosansjp/v53/-F6jfjtqLzI2JPCgQBnw7HFyzSD-AsregP8VFBEi75vY0rw-oME.woff2"
+    href="https://fonts.gstatic.com/s/notosansjp/v56/-F62fjtqLzI2JPCgQBnw7HFowwII2lcnk-AFfrgQrvWXpdFg3KXxAMsKMbdN.119.woff2"
+    crossorigin="anonymous">
+  <!-- 漢字（常用漢字上位）含むサブセット（.115）もpreload -->
+  <link rel="preload" as="font" type="font/woff2"
+    href="https://fonts.gstatic.com/s/notosansjp/v56/-F62fjtqLzI2JPCgQBnw7HFowwII2lcnk-AFfrgQrvWXpdFg3KXxAMsKMbdN.115.woff2"
     crossorigin="anonymous">
   <!-- Google Tag Manager -->
   <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
