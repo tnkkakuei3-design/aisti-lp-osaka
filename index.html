@@ -546,14 +546,22 @@ class ChatForm{
   }
 }
 // フォント読み込み完了後にbodyをフェードイン表示（FOUT対策）
-// document.fonts.ready: 全フォントの読み込みが完了したときに解決するPromise
+// document.fonts.load() で 400/500/600/700 の全ウェイトを明示的にプリロードしてからフェードインする
+// → 動的生成ボタン（font-weight:600/700）のFOUTを防止する
 // タイムアウト2.5秒: フォントが遅い場合でもユーザーを待たせすぎない
 (function(){
   var TIMEOUT=2500;
   function showBody(){document.body.style.opacity='1';}
   var timer=setTimeout(showBody,TIMEOUT);
-  if(document.fonts&&document.fonts.ready){
-    document.fonts.ready.then(function(){
+  if(document.fonts&&document.fonts.load){
+    // 400/500/600/700 の全ウェイトを明示的にロードする（ボタンの font-weight:600/700 のFOUT防止）
+    var loads=['400','500','600','700'].map(function(w){
+      return document.fonts.load(w+' 1em "Noto Sans JP"','あいうえお');
+    });
+    Promise.all(loads).then(function(){
+      clearTimeout(timer);
+      showBody();
+    }).catch(function(){
       clearTimeout(timer);
       showBody();
     });
