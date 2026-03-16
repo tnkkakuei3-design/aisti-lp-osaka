@@ -22,14 +22,6 @@
   <!-- Noto Sans JP: font-display=swap + document.fonts.ready でFOUT（フォント切り替えのカクつき）を防止 -->
   <!-- body を最初 opacity:0 にしておき、フォント読み込み完了後にフェードイン表示させる -->
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <!-- ひらがな・カタカナ・基本ASCII含むサブセット（.119）を最優先でpreload -->
-  <link rel="preload" as="font" type="font/woff2"
-    href="https://fonts.gstatic.com/s/notosansjp/v56/-F62fjtqLzI2JPCgQBnw7HFowwII2lcnk-AFfrgQrvWXpdFg3KXxAMsKMbdN.119.woff2"
-    crossorigin="anonymous">
-  <!-- 漢字（常用漢字上位）含むサブセット（.115）もpreload -->
-  <link rel="preload" as="font" type="font/woff2"
-    href="https://fonts.gstatic.com/s/notosansjp/v56/-F62fjtqLzI2JPCgQBnw7HFowwII2lcnk-AFfrgQrvWXpdFg3KXxAMsKMbdN.115.woff2"
-    crossorigin="anonymous">
   <!-- Google Tag Manager -->
   <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
   new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
