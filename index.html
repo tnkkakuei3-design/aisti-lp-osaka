@@ -19,9 +19,9 @@
   <link rel="dns-prefetch" href="https://fonts.gstatic.com">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <!-- Noto Sans JP: font-display=optional でFOUT（フォント切り替えのカクつき）を防止 -->
-  <!-- optional: フォントが間に合えばNoto Sans JP、間に合わなければシステムフォントのまま（切り替えなし） -->
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;600;700&display=optional" rel="stylesheet">
+  <!-- Noto Sans JP: font-display=swap + document.fonts.ready でFOUT（フォント切り替えのカクつき）を防止 -->
+  <!-- body を最初 opacity:0 にしておき、フォント読み込み完了後にフェードイン表示させる -->
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;600;700&display=swap" rel="stylesheet">
   <!-- ひらがな・カタカナ・基本ASCII含むサブセット（.119）を最優先でpreload -->
   <link rel="preload" as="font" type="font/woff2"
     href="https://fonts.gstatic.com/s/notosansjp/v56/-F62fjtqLzI2JPCgQBnw7HFowwII2lcnk-AFfrgQrvWXpdFg3KXxAMsKMbdN.119.woff2"
@@ -65,7 +65,7 @@
       --radius:14px;--radius-sm:10px;
       --font-bold:text-shadow:0 0 0.2px currentColor
     }
-    body{font-family:"Noto Sans JP",-apple-system,BlinkMacSystemFont,sans-serif;font-weight:500;background:var(--bg);color:var(--text);height:100vh;height:100dvh;display:flex;flex-direction:column;overflow:hidden;-webkit-text-size-adjust:100%;-webkit-font-smoothing:auto;-moz-osx-font-smoothing:auto;text-rendering:optimizeLegibility;-webkit-text-stroke:0.15px;text-shadow:0 0 0.2px currentColor}
+    body{font-family:"Noto Sans JP",-apple-system,BlinkMacSystemFont,sans-serif;font-weight:500;background:var(--bg);color:var(--text);height:100vh;height:100dvh;display:flex;flex-direction:column;overflow:hidden;-webkit-text-size-adjust:100%;-webkit-font-smoothing:auto;-moz-osx-font-smoothing:auto;text-rendering:optimizeLegibility;-webkit-text-stroke:0.15px;text-shadow:0 0 0.2px currentColor;opacity:0;transition:opacity .25s ease}
 
     /* ===== HEADER ===== */
     .header{
@@ -553,6 +553,22 @@ class ChatForm{
     this.isProcessing=false;
   }
 }
+// フォント読み込み完了後にbodyをフェードイン表示（FOUT対策）
+// document.fonts.ready: 全フォントの読み込みが完了したときに解決するPromise
+// タイムアウト2.5秒: フォントが遅い場合でもユーザーを待たせすぎない
+(function(){
+  var TIMEOUT=2500;
+  function showBody(){document.body.style.opacity='1';}
+  var timer=setTimeout(showBody,TIMEOUT);
+  if(document.fonts&&document.fonts.ready){
+    document.fonts.ready.then(function(){
+      clearTimeout(timer);
+      showBody();
+    });
+  } else {
+    showBody();
+  }
+})();
 document.addEventListener('DOMContentLoaded',()=>new ChatForm());
 </script>
 </body>
