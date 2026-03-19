@@ -167,7 +167,7 @@ async function handleSessionPost(request, env, ctx, corsHeaders) {
         fetch(env.GAS_WEBHOOK_URL, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ session_id: sessionId, ...data }),
+          body: JSON.stringify({ session_id: sessionId, region: env.REGION || 'osaka', ...data }),
         }).then(res => {
           if (!res.ok) {
             // HTTPエラー（4xx/5xx）をログに記録する
