@@ -2,21 +2,28 @@
  * gas-webhook.js — Google Apps Script Webhook
  * 
  * Cloudflare Workers からのリード通知を受け取り、
- * Google スプレッドシートに記録し、通知メールを送信する。
+ * Google スプレッドシートの「LP査定データ」シートに記録し、通知メールを送信する。
  * 
  * 使い方:
- *   1. Google スプレッドシートを作成し、1行目にヘッダー行を設定
+ *   1. Google スプレッドシートに「LP査定データ」という名前のシートを作成し、1行目にヘッダー行を設定
  *   2. Apps Script エディタ（拡張機能 → Apps Script）でこのコードを貼り付け
  *   3. デプロイ → ウェブアプリ → アクセスできるユーザー「全員」で公開
  *   4. 生成されたURLを Cloudflare Pages の環境変数 GAS_WEBHOOK_URL に設定
  *   5. メール通知を有効にする場合: Apps Script エディタ →
  *      プロジェクトの設定 → スクリプトプロパティ → NOTIFY_EMAIL を追加
  * 
- * ヘッダー行（A1〜Q1）:
- *   timestamp | session_id | source | property_type | area | town |
+ * ヘッダー行（A1〜R1）:
+ *   timestamp | session_id | source | region | property_type | area | town |
  *   floor_area | building_age | timing | est_low | est_high |
  *   utm_source | utm_medium | utm_campaign | utm_term | ttclid | landing_url
+ * 
+ * 変更履歴:
+ *   2026-03-19 C案対応: 書き込み先を「LP査定データ」シートに分離、region列を追加（18列構成）
  */
+
+// ── 設定 ──────────────────────────────────────
+var SHEET_NAME = 'LP査定データ';
+// ──────────────────────────────────────────────
 
 /**
  * セルインジェクション（数式インジェクション）対策のサニタイズ関数
@@ -52,9 +59,9 @@ function doPost(e) {
     }
 
     // 許可するフィールド名のみ受け入れ（ホワイトリスト方式）
-    // 新しいフィールドを追加する場合は、ここにも追記してください
+    // region を追加（東京・福岡対応用）
     var allowedFields = [
-      'created_at', 'session_id', 'source', 'property_type', 'area', 'town',
+      'created_at', 'session_id', 'source', 'region', 'property_type', 'area', 'town',
       'floor_area', 'building_age', 'timing', 'est_low', 'est_high',
       'utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'ttclid', 'landing_url'
     ];
@@ -69,14 +76,22 @@ function doPost(e) {
       }
     }
 
-    var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+    // 「LP査定データ」シートに書き込む（既存のLINE Botデータシートとは分離）
+    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    var sheet = ss.getSheetByName(SHEET_NAME);
 
-    // ヘッダーが未設定の場合は自動作成
+    // シートが存在しない場合は自動作成
+    if (!sheet) {
+      sheet = ss.insertSheet(SHEET_NAME);
+    }
+
+    // ヘッダーが未設定の場合は自動作成（18列）
     if (sheet.getLastRow() === 0) {
       sheet.appendRow([
         'timestamp',
         'session_id',
         'source',
+        'region',
         'property_type',
         'area',
         'town',
@@ -95,13 +110,11 @@ function doPost(e) {
     }
 
     // データ行を追加（ホワイトリスト済み + セルインジェクション対策済み）
-    // floor_area（例: "〜20㎡"）と building_age（例: "新築〜5年"）は
-    // 数値ではなく文字列として送信されるため、sanitizeCellValue_() を適用する
-    // est_low / est_high / created_at もAPIから任意文字列を送信可能なためサニタイズする
     sheet.appendRow([
       sanitizeCellValue_(sanitized.created_at) || new Date().toISOString(),
       sanitizeCellValue_(sanitized.session_id),
       sanitizeCellValue_(sanitized.source),
+      sanitizeCellValue_(sanitized.region),
       sanitizeCellValue_(sanitized.property_type),
       sanitizeCellValue_(sanitized.area),
       sanitizeCellValue_(sanitized.town),
@@ -143,12 +156,14 @@ function sendLeadNotification_(data) {
   try {
     const source = data.source || 'unknown';
     const area = data.area || '不明';
-    const subject = '[新規リード] ' + area + ' - ' + source;
+    const region = data.region || '不明';
+    const subject = '[新規リード] ' + region + ' ' + area + ' - ' + source;
     const body = [
       '新しい査定リードが届きました。',
       '',
       'セッションID: ' + (data.session_id || ''),
       'ソース: ' + source,
+      '地域: ' + region,
       '物件種別: ' + (data.property_type || ''),
       'エリア: ' + area,
       '町名: ' + (data.town || ''),
